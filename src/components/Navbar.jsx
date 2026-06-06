@@ -14,9 +14,6 @@ export default function Navbar() {
               <Link to="/" className="text-white hover:text-blue-200 px-3 py-2">
                 Home
               </Link>
-              <Link to="/products" className="text-white hover:text-blue-200 px-3 py-2">
-                Products
-              </Link>
               <Link to="/admin" className="text-white hover:text-blue-200 px-3 py-2">
                 Admin
               </Link>

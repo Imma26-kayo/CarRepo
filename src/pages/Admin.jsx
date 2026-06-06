@@ -7,6 +7,7 @@ export default function Admin() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category: 'rims',
@@ -23,8 +24,17 @@ export default function Admin() {
   }, []);
 
   const fetchProducts = async () => {
-    const response = await axios.get('http://localhost:5000/api/products');
-    setProducts(response.data);
+    try {
+      setIsLoading(true);
+      const response = await axios.get('http://localhost:5000/api/products');
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Failed to load products. Make sure the backend is running.');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -40,15 +50,21 @@ export default function Admin() {
       fetchProducts();
       closeModal();
     } catch (error) {
-      toast.error('Error saving product');
+      console.error('Error saving product:', error);
+      toast.error('Error saving product. Please check the backend connection.');
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure?')) {
-      await axios.delete(`http://localhost:5000/api/products/${id}`);
-      toast.success('Product deleted');
-      fetchProducts();
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await axios.delete(`http://localhost:5000/api/products/${id}`);
+        toast.success('Product deleted successfully');
+        fetchProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast.error('Error deleting product');
+      }
     }
   };
 
@@ -90,50 +106,64 @@ export default function Admin() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product._id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                  <div className="text-sm text-gray-500">{product.brand}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.category}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${product.price}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    product.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {product.stock} units
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button onClick={() => openModal(product)} className="text-primary-600 hover:text-primary-900 mr-3">
-                    <PencilIcon className="h-5 w-5" />
-                  </button>
-                  <button onClick={() => handleDelete(product._id)} className="text-red-600 hover:text-red-900">
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </td>
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading products...</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                    No products found
+                  </td>
+                </tr>
+              ) : (
+                products.map((product) => (
+                  <tr key={product._id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm text-gray-500">{product.brand}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {product.category}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${product.price}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        product.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {product.stock} units
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={() => openModal(product)} className="text-primary-600 hover:text-primary-900 mr-3">
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleDelete(product._id)} className="text-red-600 hover:text-red-900">
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Modal */}
       {isModalOpen && (
