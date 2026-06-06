@@ -7,7 +7,7 @@ import Admin from './pages/Admin';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Navbar />
         <Toaster position="top-right" />
         <Routes>
